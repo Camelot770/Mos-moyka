@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1a1a2e">
+  <title>МосМойка - Онлайн запись</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-content">
+        <div class="logo">
+          <span class="logo-icon">🚗</span>
+          <div class="logo-text">
+            <h1>МосМойка</h1>
+            <span class="tagline">Премиум автомойка</span>
+          </div>
+        </div>
+        <button class="location-btn" id="locationBtn">
+          <span class="location-icon">📍</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Steps Indicator -->
+      <div class="steps-indicator">
+        <div class="step active" data-step="1">
+          <div class="step-number">1</div>
+          <span>Услуга</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step" data-step="2">
+          <div class="step-number">2</div>
+          <span>Дата</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step" data-step="3">
+          <div class="step-number">3</div>
+          <span>Время</span>
+        </div>
+      </div>
+
+      <!-- Step 1: Services -->
+      <section class="section services-section active" id="step1">
+        <h2 class="section-title">Выберите услугу</h2>
+        <div class="services-grid" id="servicesGrid">
+          <!-- Services will be loaded here -->
+        </div>
+      </section>
+
+      <!-- Step 2: Date -->
+      <section class="section date-section" id="step2">
+        <h2 class="section-title">Выберите дату</h2>
+        <div class="calendar-container">
+          <div class="calendar-header">
+            <button class="calendar-nav" id="prevMonth">‹</button>
+            <span class="calendar-title" id="calendarTitle">Январь 2026</span>
+            <button class="calendar-nav" id="nextMonth">›</button>
+          </div>
+          <div class="calendar-weekdays">
+            <span>Пн</span>
+            <span>Вт</span>
+            <span>Ср</span>
+            <span>Чт</span>
+            <span>Пт</span>
+            <span>Сб</span>
+            <span>Вс</span>
+          </div>
+          <div class="calendar-days" id="calendarDays">
+            <!-- Calendar days will be generated here -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 3: Time -->
+      <section class="section time-section" id="step3">
+        <h2 class="section-title">Выберите время</h2>
+        <div class="time-slots" id="timeSlots">
+          <!-- Time slots will be loaded here -->
+        </div>
+      </section>
+
+      <!-- Confirmation -->
+      <section class="section confirmation-section" id="confirmationSection">
+        <h2 class="section-title">Подтверждение записи</h2>
+        <div class="booking-summary">
+          <div class="summary-card">
+            <div class="summary-item">
+              <span class="summary-icon" id="summaryServiceIcon">🚗</span>
+              <div class="summary-details">
+                <span class="summary-label">Услуга</span>
+                <span class="summary-value" id="summaryService">-</span>
+              </div>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-item">
+              <span class="summary-icon">📅</span>
+              <div class="summary-details">
+                <span class="summary-label">Дата</span>
+                <span class="summary-value" id="summaryDate">-</span>
+              </div>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-item">
+              <span class="summary-icon">🕐</span>
+              <div class="summary-details">
+                <span class="summary-label">Время</span>
+                <span class="summary-value" id="summaryTime">-</span>
+              </div>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-item">
+              <span class="summary-icon">💰</span>
+              <div class="summary-details">
+                <span class="summary-label">Стоимость</span>
+                <span class="summary-value summary-price" id="summaryPrice">-</span>
+              </div>
+            </div>
+          </div>
+          <div class="address-info">
+            <span class="address-icon">📍</span>
+            <div class="address-text">
+              <span class="address-label">Адрес</span>
+              <span class="address-value">Маршала Бирюзова ул., 32 к.1, Москва</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+      <button class="nav-btn back-btn" id="backBtn" style="display: none;">
+        <span>← Назад</span>
+      </button>
+      <button class="nav-btn next-btn" id="nextBtn" disabled>
+        <span id="nextBtnText">Далее</span>
+      </button>
+    </nav>
+
+    <!-- Success Modal -->
+    <div class="modal" id="successModal">
+      <div class="modal-content">
+        <div class="success-animation">
+          <div class="checkmark">✓</div>
+        </div>
+        <h2>Запись подтверждена!</h2>
+        <p>Ждём вас по адресу:<br>Маршала Бирюзова ул., 32 к.1</p>
+        <button class="modal-btn" id="closeModalBtn">Закрыть</button>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="loader"></div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/app.js"></script>
+</body>
+</html>
