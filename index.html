@@ -3,168 +3,552 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#1a1a2e">
-  <title>МосМойка - Онлайн запись</title>
+  <title>МосМойка</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/src/styles.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: var(--tg-theme-bg-color, #1a1a2e);
+      --text: var(--tg-theme-text-color, #ffffff);
+      --hint: var(--tg-theme-hint-color, #8b8b9e);
+      --btn: var(--tg-theme-button-color, #4facfe);
+      --btn-text: var(--tg-theme-button-text-color, #ffffff);
+      --secondary: var(--tg-theme-secondary-bg-color, #16213e);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 100px;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      padding: 24px 20px;
+      text-align: center;
+    }
+
+    .header h1 { font-size: 24px; margin-bottom: 4px; }
+    .header p { opacity: 0.9; font-size: 14px; }
+
+    .section {
+      padding: 20px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--hint);
+    }
+
+    .steps {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding: 16px;
+      background: var(--secondary);
+    }
+
+    .step {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+      background: rgba(255,255,255,0.1);
+      opacity: 0.5;
+    }
+
+    .step.active {
+      background: var(--btn);
+      opacity: 1;
+    }
+
+    .step.done {
+      background: #38ef7d;
+      opacity: 1;
+    }
+
+    .services { display: flex; flex-direction: column; gap: 10px; }
+
+    .service {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px;
+      background: var(--secondary);
+      border-radius: 12px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .service:hover { border-color: rgba(79, 172, 254, 0.3); }
+    .service.selected { border-color: var(--btn); background: rgba(79, 172, 254, 0.1); }
+
+    .service-icon { font-size: 32px; }
+    .service-info { flex: 1; }
+    .service-name { font-weight: 600; margin-bottom: 2px; }
+    .service-desc { font-size: 13px; color: var(--hint); margin-bottom: 6px; }
+    .service-price { color: var(--btn); font-weight: 700; }
+    .service-time { font-size: 12px; color: var(--hint); margin-left: 10px; }
+
+    .calendar {
+      background: var(--secondary);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .cal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .cal-nav {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: var(--text);
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .cal-nav:disabled { opacity: 0.3; }
+
+    .cal-weekdays, .cal-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      text-align: center;
+    }
+
+    .cal-weekdays span {
+      font-size: 12px;
+      color: var(--hint);
+      padding: 8px 0;
+    }
+
+    .cal-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      font-size: 14px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: var(--text);
+    }
+
+    .cal-day:hover:not(.disabled) { background: rgba(79, 172, 254, 0.2); }
+    .cal-day.selected { background: var(--btn); }
+    .cal-day.today { border: 2px solid var(--btn); }
+    .cal-day.disabled { opacity: 0.3; cursor: default; }
+
+    .time-slots {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .time-slot {
+      padding: 14px;
+      text-align: center;
+      background: var(--secondary);
+      border-radius: 10px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      font-size: 15px;
+      color: var(--text);
+    }
+
+    .time-slot:hover:not(.disabled) { border-color: rgba(79, 172, 254, 0.5); }
+    .time-slot.selected { background: var(--btn); border-color: var(--btn); }
+    .time-slot.disabled { opacity: 0.3; cursor: default; text-decoration: line-through; }
+
+    .summary {
+      background: var(--secondary);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .summary-row:last-child { border: none; }
+    .summary-label { color: var(--hint); }
+    .summary-value { font-weight: 600; }
+    .summary-price { color: var(--btn); font-size: 20px; }
+
+    .address {
+      margin-top: 16px;
+      padding: 16px;
+      background: rgba(79, 172, 254, 0.1);
+      border-radius: 12px;
+      border: 1px dashed rgba(79, 172, 254, 0.3);
+      text-align: center;
+    }
+
+    .address-icon { font-size: 24px; margin-bottom: 8px; }
+    .address-text { font-size: 14px; }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 16px 20px;
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+      background: linear-gradient(transparent, var(--bg) 20%);
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+
+    .btn-back {
+      background: var(--secondary);
+      color: var(--text);
+    }
+
+    .btn-next {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      color: white;
+    }
+
+    .btn-next:disabled { opacity: 0.5; cursor: default; }
+
+    .hidden { display: none !important; }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: var(--secondary);
+      border-radius: 16px;
+      padding: 32px;
+      text-align: center;
+      max-width: 320px;
+    }
+
+    .modal-icon {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin: 0 auto 20px;
+    }
+
+    .modal h2 { margin-bottom: 12px; }
+    .modal p { color: var(--hint); margin-bottom: 24px; font-size: 14px; }
+  </style>
 </head>
 <body>
-  <div id="app">
-    <!-- Header -->
-    <header class="header">
-      <div class="header-content">
-        <div class="logo">
-          <span class="logo-icon">🚗</span>
-          <div class="logo-text">
-            <h1>МосМойка</h1>
-            <span class="tagline">Премиум автомойка</span>
-          </div>
-        </div>
-        <button class="location-btn" id="locationBtn">
-          <span class="location-icon">📍</span>
-        </button>
+  <header class="header">
+    <h1>🚗 МосМойка</h1>
+    <p>Премиум автомойка</p>
+  </header>
+
+  <div class="steps">
+    <div class="step active" id="step1ind">1</div>
+    <div class="step" id="step2ind">2</div>
+    <div class="step" id="step3ind">3</div>
+  </div>
+
+  <!-- Step 1: Services -->
+  <div class="section" id="step1">
+    <div class="section-title">Выберите услугу</div>
+    <div class="services" id="servicesList"></div>
+  </div>
+
+  <!-- Step 2: Date -->
+  <div class="section hidden" id="step2">
+    <div class="section-title">Выберите дату</div>
+    <div class="calendar">
+      <div class="cal-header">
+        <button class="cal-nav" id="prevMonth">‹</button>
+        <span id="monthTitle">Январь 2026</span>
+        <button class="cal-nav" id="nextMonth">›</button>
       </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="main-content">
-      <!-- Steps Indicator -->
-      <div class="steps-indicator">
-        <div class="step active" data-step="1">
-          <div class="step-number">1</div>
-          <span>Услуга</span>
-        </div>
-        <div class="step-line"></div>
-        <div class="step" data-step="2">
-          <div class="step-number">2</div>
-          <span>Дата</span>
-        </div>
-        <div class="step-line"></div>
-        <div class="step" data-step="3">
-          <div class="step-number">3</div>
-          <span>Время</span>
-        </div>
+      <div class="cal-weekdays">
+        <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
       </div>
-
-      <!-- Step 1: Services -->
-      <section class="section services-section active" id="step1">
-        <h2 class="section-title">Выберите услугу</h2>
-        <div class="services-grid" id="servicesGrid">
-          <!-- Services will be loaded here -->
-        </div>
-      </section>
-
-      <!-- Step 2: Date -->
-      <section class="section date-section" id="step2">
-        <h2 class="section-title">Выберите дату</h2>
-        <div class="calendar-container">
-          <div class="calendar-header">
-            <button class="calendar-nav" id="prevMonth">‹</button>
-            <span class="calendar-title" id="calendarTitle">Январь 2026</span>
-            <button class="calendar-nav" id="nextMonth">›</button>
-          </div>
-          <div class="calendar-weekdays">
-            <span>Пн</span>
-            <span>Вт</span>
-            <span>Ср</span>
-            <span>Чт</span>
-            <span>Пт</span>
-            <span>Сб</span>
-            <span>Вс</span>
-          </div>
-          <div class="calendar-days" id="calendarDays">
-            <!-- Calendar days will be generated here -->
-          </div>
-        </div>
-      </section>
-
-      <!-- Step 3: Time -->
-      <section class="section time-section" id="step3">
-        <h2 class="section-title">Выберите время</h2>
-        <div class="time-slots" id="timeSlots">
-          <!-- Time slots will be loaded here -->
-        </div>
-      </section>
-
-      <!-- Confirmation -->
-      <section class="section confirmation-section" id="confirmationSection">
-        <h2 class="section-title">Подтверждение записи</h2>
-        <div class="booking-summary">
-          <div class="summary-card">
-            <div class="summary-item">
-              <span class="summary-icon" id="summaryServiceIcon">🚗</span>
-              <div class="summary-details">
-                <span class="summary-label">Услуга</span>
-                <span class="summary-value" id="summaryService">-</span>
-              </div>
-            </div>
-            <div class="summary-divider"></div>
-            <div class="summary-item">
-              <span class="summary-icon">📅</span>
-              <div class="summary-details">
-                <span class="summary-label">Дата</span>
-                <span class="summary-value" id="summaryDate">-</span>
-              </div>
-            </div>
-            <div class="summary-divider"></div>
-            <div class="summary-item">
-              <span class="summary-icon">🕐</span>
-              <div class="summary-details">
-                <span class="summary-label">Время</span>
-                <span class="summary-value" id="summaryTime">-</span>
-              </div>
-            </div>
-            <div class="summary-divider"></div>
-            <div class="summary-item">
-              <span class="summary-icon">💰</span>
-              <div class="summary-details">
-                <span class="summary-label">Стоимость</span>
-                <span class="summary-value summary-price" id="summaryPrice">-</span>
-              </div>
-            </div>
-          </div>
-          <div class="address-info">
-            <span class="address-icon">📍</span>
-            <div class="address-text">
-              <span class="address-label">Адрес</span>
-              <span class="address-value">Маршала Бирюзова ул., 32 к.1, Москва</span>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <!-- Bottom Navigation -->
-    <nav class="bottom-nav">
-      <button class="nav-btn back-btn" id="backBtn" style="display: none;">
-        <span>← Назад</span>
-      </button>
-      <button class="nav-btn next-btn" id="nextBtn" disabled>
-        <span id="nextBtnText">Далее</span>
-      </button>
-    </nav>
-
-    <!-- Success Modal -->
-    <div class="modal" id="successModal">
-      <div class="modal-content">
-        <div class="success-animation">
-          <div class="checkmark">✓</div>
-        </div>
-        <h2>Запись подтверждена!</h2>
-        <p>Ждём вас по адресу:<br>Маршала Бирюзова ул., 32 к.1</p>
-        <button class="modal-btn" id="closeModalBtn">Закрыть</button>
-      </div>
-    </div>
-
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-      <div class="loader"></div>
+      <div class="cal-days" id="calDays"></div>
     </div>
   </div>
 
-  <script type="module" src="/src/app.js"></script>
+  <!-- Step 3: Time -->
+  <div class="section hidden" id="step3">
+    <div class="section-title">Выберите время</div>
+    <div class="time-slots" id="timeSlots"></div>
+  </div>
+
+  <!-- Step 4: Confirm -->
+  <div class="section hidden" id="step4">
+    <div class="section-title">Подтверждение</div>
+    <div class="summary">
+      <div class="summary-row">
+        <span class="summary-label">Услуга</span>
+        <span class="summary-value" id="sumService">-</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Дата</span>
+        <span class="summary-value" id="sumDate">-</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Время</span>
+        <span class="summary-value" id="sumTime">-</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Стоимость</span>
+        <span class="summary-value summary-price" id="sumPrice">-</span>
+      </div>
+    </div>
+    <div class="address">
+      <div class="address-icon">📍</div>
+      <div class="address-text">Маршала Бирюзова ул., 32 к.1, Москва</div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="btn btn-back hidden" id="backBtn">← Назад</button>
+    <button class="btn btn-next" id="nextBtn" disabled>Далее</button>
+  </div>
+
+  <!-- Success Modal -->
+  <div class="modal hidden" id="modal">
+    <div class="modal-content">
+      <div class="modal-icon">✓</div>
+      <h2>Запись подтверждена!</h2>
+      <p>Ждём вас по адресу:<br>Маршала Бирюзова ул., 32 к.1</p>
+      <button class="btn btn-next" id="closeModal">Закрыть</button>
+    </div>
+  </div>
+
+  <script>
+    const tg = window.Telegram?.WebApp;
+    if (tg) { tg.ready(); tg.expand(); }
+
+    const API_URL = 'https://mos-mojka-camelot770.amvera.io';
+
+    const services = [
+      { id: 'express', name: 'Экспресс-мойка', desc: 'Быстрая наружная мойка', price: 500, time: 15, icon: '🚿' },
+      { id: 'standard', name: 'Стандарт', desc: 'Мойка + пылесос салона', price: 800, time: 30, icon: '🚗' },
+      { id: 'comfort', name: 'Комфорт', desc: 'Полная мойка + чернение + полироль', price: 1200, time: 45, icon: '✨' },
+      { id: 'premium', name: 'Премиум', desc: 'Комплексная + химчистка салона', price: 2500, time: 90, icon: '👑' },
+      { id: 'detailing', name: 'Детейлинг', desc: 'Полировка + защитное покрытие', price: 5000, time: 180, icon: '💎' },
+      { id: 'interior', name: 'Химчистка салона', desc: 'Глубокая чистка салона', price: 3500, time: 120, icon: '🧹' }
+    ];
+
+    const times = ['09:00','09:30','10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00'];
+    const months = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+    const weekdays = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+
+    let step = 1, selected = { service: null, date: null, time: null }, curMonth = new Date();
+
+    // Render services
+    const servicesList = document.getElementById('servicesList');
+    services.forEach(s => {
+      const div = document.createElement('div');
+      div.className = 'service';
+      div.innerHTML = `
+        <span class="service-icon">${s.icon}</span>
+        <div class="service-info">
+          <div class="service-name">${s.name}</div>
+          <div class="service-desc">${s.desc}</div>
+          <span class="service-price">${s.price} ₽</span>
+          <span class="service-time">⏱ ${s.time} мин</span>
+        </div>
+      `;
+      div.onclick = () => {
+        document.querySelectorAll('.service').forEach(el => el.classList.remove('selected'));
+        div.classList.add('selected');
+        selected.service = s;
+        updateBtn();
+      };
+      servicesList.appendChild(div);
+    });
+
+    // Calendar
+    function renderCal() {
+      const today = new Date();
+      const year = curMonth.getFullYear(), month = curMonth.getMonth();
+      document.getElementById('monthTitle').textContent = `${months[month]} ${year}`;
+      document.getElementById('prevMonth').disabled = year === today.getFullYear() && month === today.getMonth();
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const startDay = firstDay === 0 ? 6 : firstDay - 1;
+
+      const container = document.getElementById('calDays');
+      container.innerHTML = '';
+
+      for (let i = 0; i < startDay; i++) {
+        container.innerHTML += '<div></div>';
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const date = new Date(year, month, d);
+        const dateStr = `${String(d).padStart(2,'0')}.${String(month+1).padStart(2,'0')}.${year}`;
+        const isPast = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const isToday = date.toDateString() === today.toDateString();
+        const isSelected = selected.date === dateStr;
+
+        const btn = document.createElement('button');
+        btn.className = `cal-day${isPast ? ' disabled' : ''}${isToday ? ' today' : ''}${isSelected ? ' selected' : ''}`;
+        btn.textContent = d;
+        if (!isPast) {
+          btn.onclick = () => {
+            selected.date = dateStr;
+            renderCal();
+            updateBtn();
+          };
+        }
+        container.appendChild(btn);
+      }
+    }
+
+    document.getElementById('prevMonth').onclick = () => { curMonth.setMonth(curMonth.getMonth() - 1); renderCal(); };
+    document.getElementById('nextMonth').onclick = () => { curMonth.setMonth(curMonth.getMonth() + 1); renderCal(); };
+    renderCal();
+
+    // Time slots
+    function renderTime() {
+      const container = document.getElementById('timeSlots');
+      container.innerHTML = '';
+      const now = new Date();
+      const [d, m, y] = (selected.date || '').split('.');
+      const isToday = now.getDate() === +d && now.getMonth() + 1 === +m && now.getFullYear() === +y;
+      const curMin = now.getHours() * 60 + now.getMinutes();
+
+      times.forEach(t => {
+        const [h, min] = t.split(':').map(Number);
+        const isPast = isToday && h * 60 + min <= curMin + 30;
+        const btn = document.createElement('button');
+        btn.className = `time-slot${isPast ? ' disabled' : ''}${selected.time === t ? ' selected' : ''}`;
+        btn.textContent = t;
+        if (!isPast) {
+          btn.onclick = () => {
+            selected.time = t;
+            renderTime();
+            updateBtn();
+          };
+        }
+        container.appendChild(btn);
+      });
+    }
+
+    // Navigation
+    function updateBtn() {
+      const btn = document.getElementById('nextBtn');
+      if (step === 1) btn.disabled = !selected.service;
+      else if (step === 2) btn.disabled = !selected.date;
+      else if (step === 3) btn.disabled = !selected.time;
+      else btn.disabled = false;
+      btn.textContent = step === 4 ? 'Подтвердить' : 'Далее';
+    }
+
+    function goStep(n) {
+      step = n;
+      [1,2,3,4].forEach(i => {
+        document.getElementById(`step${i}`).classList.toggle('hidden', i !== n);
+        const ind = document.getElementById(`step${i}ind`);
+        if (ind) {
+          ind.classList.remove('active', 'done');
+          if (i < n) ind.classList.add('done');
+          else if (i === n) ind.classList.add('active');
+        }
+      });
+      document.getElementById('backBtn').classList.toggle('hidden', n === 1);
+      if (n === 3) renderTime();
+      if (n === 4) updateSummary();
+      updateBtn();
+    }
+
+    function updateSummary() {
+      document.getElementById('sumService').textContent = selected.service?.name || '-';
+      const [d, m, y] = (selected.date || '').split('.');
+      const date = new Date(y, m - 1, d);
+      document.getElementById('sumDate').textContent = selected.date ? `${weekdays[date.getDay()]}, ${d} ${months[m-1].toLowerCase()}` : '-';
+      document.getElementById('sumTime').textContent = selected.time || '-';
+      document.getElementById('sumPrice').textContent = selected.service ? `${selected.service.price} ₽` : '-';
+    }
+
+    document.getElementById('nextBtn').onclick = () => {
+      if (step < 4) goStep(step + 1);
+      else submitBooking();
+    };
+
+    document.getElementById('backBtn').onclick = () => {
+      if (step > 1) goStep(step - 1);
+    };
+
+    async function submitBooking() {
+      const data = {
+        userId: tg?.initDataUnsafe?.user?.id || null,
+        userName: tg?.initDataUnsafe?.user?.first_name || 'Гость',
+        serviceId: selected.service.id,
+        date: selected.date,
+        time: selected.time,
+        price: selected.service.price
+      };
+
+      try {
+        await fetch(`${API_URL}/api/bookings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+      } catch (e) {}
+
+      if (tg) {
+        tg.sendData(JSON.stringify({ action: 'booking_confirmed', ...data }));
+      }
+
+      document.getElementById('modal').classList.remove('hidden');
+    }
+
+    document.getElementById('closeModal').onclick = () => {
+      if (tg) tg.close();
+      else document.getElementById('modal').classList.add('hidden');
+    };
+  </script>
 </body>
 </html>
